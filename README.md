@@ -4,7 +4,7 @@
 
 Windows 原生代理启动器，用于为常见 AI 编程工具选择“直连启动”或“代理启动”。程序会自动识别已安装的桌面端、npm CLI 和 VS Code 生态插件，并在启动目标程序时注入代理环境变量，避免手动修改系统环境。
 
-本项目源码来源于 [hloolx/codex-proxy-switcher-win](https://github.com/hloolx/codex-proxy-switcher-win)。当前仓库在其 MIT 许可代码基础上进行了重构和轻量化：从原有实现迁移为 C++17 Win32 原生程序，移除 .NET 运行时依赖，保留静态编译 x64 exe，并扩展了更多 Code Agent 软件识别逻辑。
+本项目源码来源于 [hloolx/codex-proxy-switcher-win](https://github.com/hloolx/codex-proxy-switcher-win)。当前仓库在其 MIT 许可代码基础上进行了重构和轻量化：从原有实现迁移为 C++17 Win32 原生程序，移除 .NET 运行时依赖，支持生成静态编译 x64 exe，并扩展了更多 Code Agent 软件识别逻辑。
 
 ![C++17](https://img.shields.io/badge/C++-17-00599C.svg)
 ![Platform](https://img.shields.io/badge/platform-Windows%2010%2F11-blue.svg)
@@ -52,17 +52,11 @@ VS Code 生态扩展：
 
 ## 下载与运行
 
-推荐下载 GitHub Release 中的静态 x64 版本：
+本仓库不直接提交编译好的 exe。普通用户推荐下载 GitHub Release 中的静态 x64 版本：
 
 - [CodexProxySwitcher-x64.exe](https://github.com/yufangjie1643/app-proxy-switcher-win/releases/download/v2.1.0/CodexProxySwitcher-x64.exe)
 
-仓库内也保留了同名构建产物：
-
-```text
-release/CodexProxySwitcher-x64.exe
-```
-
-直接运行该文件即可。首次启动会读取或创建配置，并显示当前识别到的目标程序路径。
+下载后直接运行该文件即可。首次启动会读取或创建配置，并显示当前识别到的目标程序路径。
 
 ## 从源码构建
 
@@ -78,6 +72,8 @@ release/CodexProxySwitcher-x64.exe
 build.bat
 ```
 
+`build.bat` 会自动配置 CMake 并编译 Release 版本。
+
 手动构建：
 
 ```bat
@@ -91,7 +87,7 @@ cmake --build build --config Release
 build/bin/CodexProxySwitcher.exe
 ```
 
-项目默认使用 MSVC 静态运行库 `/MT`，Release 产物不依赖额外 VC++ Runtime。
+编译好的程序位于 `build/bin/CodexProxySwitcher.exe`。项目默认使用 MSVC 静态运行库 `/MT`，Release 产物不依赖额外 VC++ Runtime。
 
 ## 测试
 
@@ -109,7 +105,6 @@ src/                 Win32/C++17 源码
 tests/               轻量回归测试
 scripts/             PowerShell 辅助启动脚本
 docs/                文档和分析材料
-release/             提交到仓库的静态 x64 可执行文件
 CMakeLists.txt       CMake 构建配置
 build.bat            Windows 构建脚本
 ```

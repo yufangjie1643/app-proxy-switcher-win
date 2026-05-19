@@ -39,7 +39,3 @@ Thumbs.db
 artifacts/
 publish/
 out/
-
-# 保留发布用静态 x64 可执行文件
-!release/
-!release/*.exe

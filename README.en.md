@@ -4,7 +4,7 @@
 
 A native Windows proxy launcher for common AI coding tools. It lets you start supported tools in either direct mode or proxy mode, injecting proxy environment variables only for the launched process instead of editing the global system environment.
 
-This repository is derived from [hloolx/codex-proxy-switcher-win](https://github.com/hloolx/codex-proxy-switcher-win). Based on that MIT-licensed source, this version has been refactored and slimmed down into a C++17 Win32 native application, removes the .NET runtime dependency, keeps a statically linked x64 executable, and expands discovery for Code Agent tools.
+This repository is derived from [hloolx/codex-proxy-switcher-win](https://github.com/hloolx/codex-proxy-switcher-win). Based on that MIT-licensed source, this version has been refactored and slimmed down into a C++17 Win32 native application, removes the .NET runtime dependency, can produce a statically linked x64 executable, and expands discovery for Code Agent tools.
 
 ![C++17](https://img.shields.io/badge/C++-17-00599C.svg)
 ![Platform](https://img.shields.io/badge/platform-Windows%2010%2F11-blue.svg)
@@ -52,17 +52,11 @@ VS Code ecosystem extensions:
 
 ## Download and Run
 
-Download the static x64 build from GitHub Releases:
+This source repository does not commit prebuilt executables. Regular users should download the static x64 build from GitHub Releases:
 
 - [CodexProxySwitcher-x64.exe](https://github.com/yufangjie1643/app-proxy-switcher-win/releases/download/v2.1.0/CodexProxySwitcher-x64.exe)
 
-The repository also keeps the same build artifact at:
-
-```text
-release/CodexProxySwitcher-x64.exe
-```
-
-Run the executable directly. On first launch, it reads or creates the configuration file and shows the detected target program paths.
+After downloading, run the executable directly. On first launch, it reads or creates the configuration file and shows the detected target program paths.
 
 ## Build from Source
 
@@ -78,6 +72,8 @@ One-command build:
 build.bat
 ```
 
+`build.bat` configures CMake and builds the Release executable automatically.
+
 Manual build:
 
 ```bat
@@ -91,7 +87,7 @@ Output:
 build/bin/CodexProxySwitcher.exe
 ```
 
-The project uses the MSVC static runtime `/MT` by default, so the Release executable does not require an extra VC++ Runtime installation.
+The compiled program is written to `build/bin/CodexProxySwitcher.exe`. The project uses the MSVC static runtime `/MT` by default, so the Release executable does not require an extra VC++ Runtime installation.
 
 ## Testing
 
@@ -109,7 +105,6 @@ src/                 Win32/C++17 source
 tests/               Lightweight regression tests
 scripts/             PowerShell helper launchers
 docs/                Notes and analysis
-release/             Committed static x64 executable
 CMakeLists.txt       CMake build configuration
 build.bat            Windows build script
 ```
