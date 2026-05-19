@@ -1,0 +1,45 @@
+# C++ 构建输出
+build/
+*.exe
+*.obj
+*.o
+*.pch
+*.pdb
+*.ilk
+*.lib
+*.dll
+*.exp
+
+# Visual Studio
+.vs/
+.vscode/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+*.vcxproj.filters
+
+# Rider / CLion
+.idea/
+*.sln.iml
+cmake-build-*/
+
+# 日志
+*.log
+
+# 临时文件
+*.tmp
+*.temp
+
+# 操作系统文件
+.DS_Store
+Thumbs.db
+
+# 发布输出
+artifacts/
+publish/
+out/
+
+# 保留发布用静态 x64 可执行文件
+!release/
+!release/*.exe
