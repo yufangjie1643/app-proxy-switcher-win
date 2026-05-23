@@ -50,6 +50,16 @@ VS Code ecosystem extensions:
 - Sourcegraph Cody
 - Tabnine
 
+## Screenshots
+
+Win32 native-controls build:
+
+![Win32 native-controls UI](docs/images/win32-ui.png)
+
+WebView2 UI build:
+
+![WebView2 UI](docs/images/webview2-ui.png)
+
 ## Download and Run
 
 This source repository does not commit prebuilt executables. Regular users should download the static x64 build from GitHub Releases:

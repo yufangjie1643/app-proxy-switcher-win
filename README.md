@@ -50,6 +50,16 @@ VS Code 生态扩展：
 - Sourcegraph Cody
 - Tabnine
 
+## 界面预览
+
+Win32 原生控件版：
+
+![Win32 原生控件版界面](docs/images/win32-ui.png)
+
+WebView2 界面版：
+
+![WebView2 界面版界面](docs/images/webview2-ui.png)
+
 ## 下载与运行
 
 本仓库不直接提交编译好的 exe。普通用户推荐下载 GitHub Release 中的静态 x64 版本：
