@@ -54,9 +54,10 @@ VS Code 生态扩展：
 
 本仓库不直接提交编译好的 exe。普通用户推荐下载 GitHub Release 中的静态 x64 版本：
 
-- [CodexProxySwitcher-x64.exe](https://github.com/yufangjie1643/app-proxy-switcher-win/releases/download/v2.1.2/CodexProxySwitcher-x64.exe)
+- [CodexProxySwitcher-win32-x64.exe](https://github.com/yufangjie1643/app-proxy-switcher-win/releases/download/v2.2.0/CodexProxySwitcher-win32-x64.exe)
+- [CodexProxySwitcher-webview2-x64.exe](https://github.com/yufangjie1643/app-proxy-switcher-win/releases/download/v2.2.0/CodexProxySwitcher-webview2-x64.exe)
 
-下载后直接运行该文件即可。首次启动会读取或创建配置，并显示当前识别到的目标程序路径。
+Win32 版体积最小，WebView2 版界面更现代。下载后直接运行对应文件即可。首次启动会读取或创建配置，并显示当前识别到的目标程序路径。
 
 ## 从源码构建
 
@@ -65,6 +66,7 @@ VS Code 生态扩展：
 - Windows 10/11 x64
 - Visual Studio 2022，安装“使用 C++ 的桌面开发”
 - CMake 3.16+
+- WebView2 版需要 Microsoft Edge WebView2 Runtime；构建脚本会自动下载 WebView2 SDK 到 `build/_deps/`
 
 一键构建：
 
@@ -72,22 +74,26 @@ VS Code 生态扩展：
 build.bat
 ```
 
-`build.bat` 会自动配置 CMake 并编译 Release 版本。
+`build.bat` 会自动准备 WebView2 SDK、配置 CMake，并同时编译 Win32 和 WebView2 两个 Release 版本。
 
 手动构建：
 
 ```bat
-cmake -S . -B build -G "Visual Studio 17 2022" -A x64
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\Fetch-WebView2.ps1
+cmake -S . -B build -G "Visual Studio 17 2022" -A x64 -DBUILD_WEBVIEW2=ON
 cmake --build build --config Release
 ```
+
+如果只需要 Win32 原生控件版，可配置 `-DBUILD_WEBVIEW2=OFF`。
 
 输出：
 
 ```text
-build/bin/CodexProxySwitcher.exe
+build/bin/CodexProxySwitcher.exe          Win32 原生控件版
+build/bin/CodexProxySwitcherWebView2.exe  WebView2 界面版
 ```
 
-编译好的程序位于 `build/bin/CodexProxySwitcher.exe`。项目默认使用 MSVC 静态运行库 `/MT`，Release 产物不依赖额外 VC++ Runtime。
+编译好的程序位于 `build/bin/`。项目默认使用 MSVC 静态运行库 `/MT`，Release 产物不依赖额外 VC++ Runtime。
 
 ## 测试
 

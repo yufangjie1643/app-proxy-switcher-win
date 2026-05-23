@@ -54,9 +54,10 @@ VS Code ecosystem extensions:
 
 This source repository does not commit prebuilt executables. Regular users should download the static x64 build from GitHub Releases:
 
-- [CodexProxySwitcher-x64.exe](https://github.com/yufangjie1643/app-proxy-switcher-win/releases/download/v2.1.2/CodexProxySwitcher-x64.exe)
+- [CodexProxySwitcher-win32-x64.exe](https://github.com/yufangjie1643/app-proxy-switcher-win/releases/download/v2.2.0/CodexProxySwitcher-win32-x64.exe)
+- [CodexProxySwitcher-webview2-x64.exe](https://github.com/yufangjie1643/app-proxy-switcher-win/releases/download/v2.2.0/CodexProxySwitcher-webview2-x64.exe)
 
-After downloading, run the executable directly. On first launch, it reads or creates the configuration file and shows the detected target program paths.
+The Win32 build is the smallest option, while the WebView2 build has a more modern interface. After downloading, run the executable directly. On first launch, it reads or creates the configuration file and shows the detected target program paths.
 
 ## Build from Source
 
@@ -65,6 +66,7 @@ Requirements:
 - Windows 10/11 x64
 - Visual Studio 2022 with Desktop development with C++
 - CMake 3.16+
+- The WebView2 build requires Microsoft Edge WebView2 Runtime; the build script downloads the WebView2 SDK into `build/_deps/`
 
 One-command build:
 
@@ -72,22 +74,26 @@ One-command build:
 build.bat
 ```
 
-`build.bat` configures CMake and builds the Release executable automatically.
+`build.bat` prepares the WebView2 SDK, configures CMake, and builds both the Win32 and WebView2 Release executables.
 
 Manual build:
 
 ```bat
-cmake -S . -B build -G "Visual Studio 17 2022" -A x64
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\Fetch-WebView2.ps1
+cmake -S . -B build -G "Visual Studio 17 2022" -A x64 -DBUILD_WEBVIEW2=ON
 cmake --build build --config Release
 ```
+
+If you only need the Win32 native-controls build, configure with `-DBUILD_WEBVIEW2=OFF`.
 
 Output:
 
 ```text
-build/bin/CodexProxySwitcher.exe
+build/bin/CodexProxySwitcher.exe          Win32 native-controls build
+build/bin/CodexProxySwitcherWebView2.exe  WebView2 UI build
 ```
 
-The compiled program is written to `build/bin/CodexProxySwitcher.exe`. The project uses the MSVC static runtime `/MT` by default, so the Release executable does not require an extra VC++ Runtime installation.
+The compiled programs are written to `build/bin/`. The project uses the MSVC static runtime `/MT` by default, so the Release executable does not require an extra VC++ Runtime installation.
 
 ## Testing
 

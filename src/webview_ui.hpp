@@ -1,0 +1,328 @@
+#pragma once
+#include <string>
+
+inline std::wstring BuildWebViewHtml() {
+    return std::wstring(LR"HTML(
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Codex 代理启动器</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #eef3f8;
+      --panel: rgba(255, 255, 255, 0.86);
+      --panel-strong: #ffffff;
+      --text: #172033;
+      --muted: #637089;
+      --line: #d8e0eb;
+      --primary: #146ef5;
+      --primary-strong: #0b54c6;
+      --ok: #139a5c;
+      --warn: #c77900;
+      --shadow: 0 22px 60px rgba(27, 42, 71, 0.16);
+      font-family: "Segoe UI Variable", "Segoe UI", "Microsoft YaHei UI", sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--text);
+      background:
+        linear-gradient(135deg, rgba(20, 110, 245, 0.10), rgba(19, 154, 92, 0.08)),
+        var(--bg);
+    }
+
+    .app {
+      min-height: 100vh;
+      padding: 28px;
+      display: grid;
+      grid-template-rows: auto 1fr;
+      gap: 18px;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+    }
+
+    .title {
+      display: flex;
+      align-items: center;
+      gap: 13px;
+    }
+
+    .mark {
+      width: 42px;
+      height: 42px;
+      border-radius: 12px;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(135deg, #146ef5, #14a36f);
+      color: #fff;
+      font-weight: 700;
+      letter-spacing: 0;
+      box-shadow: 0 12px 30px rgba(20, 110, 245, 0.24);
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 22px;
+      line-height: 1.2;
+      font-weight: 650;
+      letter-spacing: 0;
+    }
+
+    .subtitle {
+      margin-top: 3px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .mode-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.74);
+      color: var(--muted);
+      font-size: 13px;
+      white-space: nowrap;
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--ok);
+    }
+
+    main {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 220px;
+      gap: 18px;
+      align-items: stretch;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid rgba(216, 224, 235, 0.86);
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      backdrop-filter: blur(16px);
+    }
+
+    .status {
+      padding: 22px;
+      display: grid;
+      gap: 16px;
+    }
+
+    .row {
+      display: grid;
+      gap: 6px;
+    }
+
+    .label {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .value {
+      font-size: 17px;
+      line-height: 1.42;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+
+    .path {
+      padding: 13px 14px;
+      border-radius: 12px;
+      background: rgba(236, 241, 248, 0.82);
+      border: 1px solid var(--line);
+      font-family: "Cascadia Mono", Consolas, monospace;
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .actions {
+      padding: 14px;
+      display: grid;
+      gap: 10px;
+      background: var(--panel-strong);
+    }
+
+    button {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px 13px;
+      min-height: 46px;
+      background: #fff;
+      color: var(--text);
+      font: inherit;
+      font-size: 14px;
+      font-weight: 600;
+      text-align: left;
+      cursor: pointer;
+      transition: transform 120ms ease, border-color 120ms ease, background 120ms ease, box-shadow 120ms ease;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+      border-color: rgba(20, 110, 245, 0.36);
+      box-shadow: 0 10px 24px rgba(27, 42, 71, 0.10);
+    }
+
+    button:active {
+      transform: translateY(0);
+    }
+
+    .primary {
+      border-color: transparent;
+      background: linear-gradient(135deg, var(--primary), var(--primary-strong));
+      color: #fff;
+      box-shadow: 0 16px 30px rgba(20, 110, 245, 0.22);
+    }
+
+    .secondary {
+      background: #f8fafc;
+    }
+
+    .danger {
+      color: #9f2f2f;
+      background: #fff8f7;
+      border-color: #f0c9c6;
+    }
+
+    .toast {
+      position: fixed;
+      left: 28px;
+      right: 28px;
+      bottom: 22px;
+      padding: 12px 14px;
+      border-radius: 12px;
+      color: #fff;
+      background: rgba(23, 32, 51, 0.92);
+      box-shadow: 0 18px 40px rgba(0, 0, 0, 0.20);
+      opacity: 0;
+      transform: translateY(8px);
+      transition: opacity 150ms ease, transform 150ms ease;
+      pointer-events: none;
+      font-size: 13px;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+)HTML") + LR"HTML(
+
+    @media (max-width: 320px) {
+      .app { padding: 18px; }
+      header { align-items: flex-start; flex-direction: column; }
+      main { grid-template-columns: 1fr; }
+      .actions { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div class="title">
+        <div class="mark">CP</div>
+        <div>
+          <h1>Codex 代理启动器</h1>
+          <div class="subtitle">为 AI 编程工具选择直连或代理启动</div>
+        </div>
+      </div>
+      <div class="mode-pill"><span class="dot" id="foundDot"></span><span id="foundText">检测中</span></div>
+    </header>
+
+    <main>
+      <section class="panel status">
+        <div class="row">
+          <div class="label">应用</div>
+          <div class="value" id="appName">-</div>
+        </div>
+        <div class="row">
+          <div class="label">代理</div>
+          <div class="value" id="proxyUrl">-</div>
+        </div>
+        <div class="row">
+          <div class="label">模式</div>
+          <div class="value" id="modeText">-</div>
+        </div>
+        <div class="row">
+          <div class="label">程序路径</div>
+          <div class="value path" id="pathText">-</div>
+        </div>
+      </section>
+
+      <aside class="panel actions">
+        <button class="primary" data-command="launchProxy">代理启动</button>
+        <button data-command="launchNative">原生启动</button>
+        <button class="secondary" data-command="switchApp">切换应用</button>
+        <button class="secondary" data-command="switchMode">切换模式</button>
+        <button class="secondary" data-command="configureProxy">配置代理</button>
+        <button class="secondary" data-command="openConfigDir">配置目录</button>
+        <button class="danger" id="disableProxy" data-command="disableSystemProxy">关闭系统代理</button>
+      </aside>
+    </main>
+  </div>
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const send = (command) => window.chrome.webview.postMessage({ command });
+    const text = (id, value) => { document.getElementById(id).textContent = value || "-"; };
+    let toastTimer = 0;
+
+    function showToast(message) {
+      const el = document.getElementById("toast");
+      el.textContent = message;
+      el.classList.add("show");
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => el.classList.remove("show"), 2600);
+    }
+
+    function applyStatus(data) {
+      text("appName", `${data.appName} [${data.appType}]`);
+      text("proxyUrl", data.proxyUrl);
+      text("modeText", data.modeText);
+      text("pathText", data.pathText);
+      text("foundText", data.found ? "已找到目标程序" : "未找到目标程序");
+      document.getElementById("foundDot").style.background = data.found ? "#139a5c" : "#c77900";
+      document.getElementById("disableProxy").style.display = data.canDisableSystemProxy ? "block" : "none";
+      const proxyBtn = document.querySelector('[data-command="launchProxy"]');
+      proxyBtn.textContent = data.proxyButtonText || "代理启动";
+    }
+
+    document.querySelectorAll("button[data-command]").forEach((button) => {
+      button.addEventListener("click", () => send(button.dataset.command));
+    });
+
+    window.chrome.webview.addEventListener("message", (event) => {
+      const data = event.data;
+      if (!data || !data.type) return;
+      if (data.type === "status") applyStatus(data);
+      if (data.type === "toast") showToast(data.message);
+    });
+
+    send("ready");
+  </script>
+</body>
+</html>
+)HTML";
+}
