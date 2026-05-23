@@ -54,7 +54,7 @@ VS Code ecosystem extensions:
 
 This source repository does not commit prebuilt executables. Regular users should download the static x64 build from GitHub Releases:
 
-- [CodexProxySwitcher-x64.exe](https://github.com/yufangjie1643/app-proxy-switcher-win/releases/download/v2.1.1/CodexProxySwitcher-x64.exe)
+- [CodexProxySwitcher-x64.exe](https://github.com/yufangjie1643/app-proxy-switcher-win/releases/download/v2.1.2/CodexProxySwitcher-x64.exe)
 
 After downloading, run the executable directly. On first launch, it reads or creates the configuration file and shows the detected target program paths.
 

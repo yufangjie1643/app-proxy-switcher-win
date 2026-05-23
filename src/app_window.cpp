@@ -30,7 +30,7 @@ namespace {
 #endif
 
 constexpr int kBaseClientWidth = 560;
-constexpr int kBaseClientHeight = 420;
+constexpr int kBaseClientHeight = 340;
 
 }
 
@@ -214,7 +214,7 @@ void AppWindow::LayoutControls() {
     int margin = Scale(16);
     int gap = Scale(12);
     int labelH = Scale(22);
-    int pathMinH = Scale(52);
+    int pathMinH = labelH + Scale(4);
     int bigButtonH = Scale(48);
     int smallButtonH = Scale(32);
     int contentW = std::max(Scale(1), clientW - margin * 2);
@@ -246,13 +246,13 @@ void AppWindow::LayoutControls() {
                     SelectObject(hdc, oldFont);
                 }
                 ReleaseDC(hwnd_, hdc);
-                pathH = std::max(pathMinH, static_cast<int>(calc.bottom - calc.top) + Scale(8));
+                pathH = std::max(pathMinH, static_cast<int>(calc.bottom - calc.top) + Scale(6));
             }
         }
     }
     MoveWindow(hwndLblPath_, margin, y, contentW, pathH, TRUE);
 
-    y += pathH + Scale(24);
+    y += pathH + Scale(16);
     int bigW = (contentW - gap) / 2;
     MoveWindow(hwndBtnNative_, margin, y, bigW, bigButtonH, TRUE);
     MoveWindow(hwndBtnProxy_, margin + bigW + gap, y, contentW - bigW - gap, bigButtonH, TRUE);
@@ -275,9 +275,10 @@ void AppWindow::LayoutControls() {
         }
     }
 
-    int requiredH = y + margin;
-    if (requiredH > clientH) {
-        ResizeWindowForClientDpi(hwnd_, clientW, requiredH, dpi_);
+    int targetH = std::max(Scale(kBaseClientHeight), y + margin);
+    int heightDelta = targetH > clientH ? targetH - clientH : clientH - targetH;
+    if (heightDelta > Scale(1)) {
+        ResizeWindowForClientDpi(hwnd_, clientW, targetH, dpi_);
     }
 }
 

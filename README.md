@@ -54,7 +54,7 @@ VS Code 生态扩展：
 
 本仓库不直接提交编译好的 exe。普通用户推荐下载 GitHub Release 中的静态 x64 版本：
 
-- [CodexProxySwitcher-x64.exe](https://github.com/yufangjie1643/app-proxy-switcher-win/releases/download/v2.1.1/CodexProxySwitcher-x64.exe)
+- [CodexProxySwitcher-x64.exe](https://github.com/yufangjie1643/app-proxy-switcher-win/releases/download/v2.1.2/CodexProxySwitcher-x64.exe)
 
 下载后直接运行该文件即可。首次启动会读取或创建配置，并显示当前识别到的目标程序路径。
 
