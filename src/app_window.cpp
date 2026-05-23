@@ -1,5 +1,6 @@
 #include "app_window.hpp"
 #include "config_store.hpp"
+#include "dpi_utils.hpp"
 #include "app_finder.hpp"
 #include "app_select_dialog.hpp"
 #include "launcher.hpp"
@@ -31,35 +32,6 @@ namespace {
 constexpr int kBaseClientWidth = 560;
 constexpr int kBaseClientHeight = 420;
 
-unsigned int GetSystemDpi() {
-    HDC hdc = GetDC(nullptr);
-    if (!hdc) return 96;
-    int dpi = GetDeviceCaps(hdc, LOGPIXELSX);
-    ReleaseDC(nullptr, hdc);
-    return dpi > 0 ? static_cast<unsigned int>(dpi) : 96;
-}
-
-unsigned int GetWindowDpi(HWND hwnd) {
-    using GetDpiForWindowFn = UINT(WINAPI*)(HWND);
-    HMODULE user32 = GetModuleHandleW(L"user32.dll");
-    auto getDpiForWindow = user32
-        ? reinterpret_cast<GetDpiForWindowFn>(GetProcAddress(user32, "GetDpiForWindow"))
-        : nullptr;
-    if (getDpiForWindow) {
-        return getDpiForWindow(hwnd);
-    }
-    return GetSystemDpi();
-}
-
-void ResizeWindowForClient(HWND hwnd, int clientWidth, int clientHeight) {
-    RECT rc = { 0, 0, clientWidth, clientHeight };
-    DWORD style = static_cast<DWORD>(GetWindowLongPtrW(hwnd, GWL_STYLE));
-    DWORD exStyle = static_cast<DWORD>(GetWindowLongPtrW(hwnd, GWL_EXSTYLE));
-    AdjustWindowRectEx(&rc, style, FALSE, exStyle);
-    SetWindowPos(hwnd, nullptr, 0, 0, rc.right - rc.left, rc.bottom - rc.top,
-        SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE);
-}
-
 }
 
 AppWindow::AppWindow() = default;
@@ -86,18 +58,23 @@ bool AppWindow::Initialize(HINSTANCE hInstance, int nCmdShow) {
     wc.hIcon = LoadIcon(nullptr, IDI_APPLICATION);
     RegisterClassExW(&wc);
 
+    DWORD exStyle = WS_EX_DLGMODALFRAME;
+    DWORD style = WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX;
+    SIZE initialWindowSize = GetWindowSizeForClientDpi(
+        Scale(kBaseClientWidth), Scale(kBaseClientHeight), style, exStyle, dpi_);
+
     hwnd_ = CreateWindowExW(
-        WS_EX_DLGMODALFRAME,
+        exStyle,
         L"ProxySwitcherMain",
         L"Codex 代理启动器",
-        WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX,
-        CW_USEDEFAULT, CW_USEDEFAULT, Scale(kBaseClientWidth), Scale(kBaseClientHeight),
+        style,
+        CW_USEDEFAULT, CW_USEDEFAULT, initialWindowSize.cx, initialWindowSize.cy,
         nullptr, nullptr, hInstance, this
     );
 
     if (!hwnd_) return false;
     UpdateDpi(GetWindowDpi(hwnd_));
-    ResizeWindowForClient(hwnd_, Scale(kBaseClientWidth), Scale(kBaseClientHeight));
+    ResizeWindowForClientDpi(hwnd_, Scale(kBaseClientWidth), Scale(kBaseClientHeight), dpi_);
 
     configStore_ = std::make_unique<ConfigStore>();
     configStore_->Load();
@@ -191,7 +168,7 @@ void AppWindow::OnCreate() {
 }
 
 int AppWindow::Scale(int value) const {
-    return MulDiv(value, static_cast<int>(dpi_), 96);
+    return ScaleForDpi(value, dpi_);
 }
 
 void AppWindow::ApplyControlFont(HWND hwnd) {
@@ -224,7 +201,6 @@ void AppWindow::UpdateDpi(unsigned int dpi) {
     ApplyControlFont(hwndBtnDisableSys_);
     ApplyControlFont(hwndBtnProxyAddr_);
     ApplyControlFont(hwndBtnConfigDir_);
-    LayoutControls();
 }
 
 void AppWindow::LayoutControls() {
@@ -301,7 +277,7 @@ void AppWindow::LayoutControls() {
 
     int requiredH = y + margin;
     if (requiredH > clientH) {
-        ResizeWindowForClient(hwnd_, clientW, requiredH);
+        ResizeWindowForClientDpi(hwnd_, clientW, requiredH, dpi_);
     }
 }
 
@@ -353,7 +329,8 @@ LRESULT AppWindow::ProcessMessage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
             return 0;
 
         case WM_DPICHANGED: {
-            unsigned int dpi = HIWORD(wParam);
+            unsigned int dpi = LOWORD(wParam);
+            UpdateDpi(dpi);
             RECT* suggested = reinterpret_cast<RECT*>(lParam);
             if (suggested) {
                 SetWindowPos(hwnd_, nullptr,
@@ -362,14 +339,19 @@ LRESULT AppWindow::ProcessMessage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
                     suggested->bottom - suggested->top,
                     SWP_NOZORDER | SWP_NOACTIVATE);
             }
-            UpdateDpi(dpi);
+            LayoutControls();
+            RedrawWindow(hwnd_, nullptr, nullptr, RDW_INVALIDATE | RDW_ALLCHILDREN | RDW_ERASE);
             return 0;
         }
 
         case WM_GETMINMAXINFO: {
             auto* mmi = reinterpret_cast<MINMAXINFO*>(lParam);
-            mmi->ptMinTrackSize.x = Scale(kBaseClientWidth);
-            mmi->ptMinTrackSize.y = Scale(kBaseClientHeight);
+            DWORD style = static_cast<DWORD>(GetWindowLongPtrW(hwnd_, GWL_STYLE));
+            DWORD exStyle = static_cast<DWORD>(GetWindowLongPtrW(hwnd_, GWL_EXSTYLE));
+            SIZE minSize = GetWindowSizeForClientDpi(
+                Scale(kBaseClientWidth), Scale(kBaseClientHeight), style, exStyle, dpi_);
+            mmi->ptMinTrackSize.x = minSize.cx;
+            mmi->ptMinTrackSize.y = minSize.cy;
             return 0;
         }
 

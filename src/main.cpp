@@ -1,8 +1,11 @@
 #include <windows.h>
 #include <commctrl.h>
 #include "app_window.hpp"
+#include "dpi_utils.hpp"
 
 int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, int nCmdShow) {
+    EnablePerMonitorDpiAwareness();
+
     INITCOMMONCONTROLSEX iccex = { sizeof(iccex), ICC_STANDARD_CLASSES };
     InitCommonControlsEx(&iccex);
 

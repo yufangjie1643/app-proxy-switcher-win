@@ -1,5 +1,7 @@
 #include "../src/app_finder.hpp"
+#include "../src/dpi_utils.hpp"
 #include "../src/known_agents.hpp"
+#include <windows.h>
 #include <cstdlib>
 #include <iostream>
 #include <string>
@@ -173,6 +175,31 @@ static void KnownAgentMergeMigratesOldClaudeMsixEntry() {
     Check(currentId == L"claude_default", "current id should remain on migrated Claude app");
 }
 
+static void WindowSizeForClientUsesRequestedDpi() {
+    using AdjustWindowRectExForDpiFn = BOOL(WINAPI*)(LPRECT, DWORD, BOOL, DWORD, UINT);
+    HMODULE user32 = GetModuleHandleW(L"user32.dll");
+    auto adjustForDpi = user32
+        ? reinterpret_cast<AdjustWindowRectExForDpiFn>(GetProcAddress(user32, "AdjustWindowRectExForDpi"))
+        : nullptr;
+    if (!adjustForDpi) {
+        return;
+    }
+
+    DWORD style = WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX;
+    DWORD exStyle = WS_EX_DLGMODALFRAME;
+    unsigned int dpi = 144;
+    int clientWidth = MulDiv(560, static_cast<int>(dpi), 96);
+    int clientHeight = MulDiv(420, static_cast<int>(dpi), 96);
+
+    RECT expected = { 0, 0, clientWidth, clientHeight };
+    BOOL ok = adjustForDpi(&expected, style, FALSE, exStyle, dpi);
+    Check(ok != FALSE, "AdjustWindowRectExForDpi should calculate expected window size");
+
+    SIZE actual = GetWindowSizeForClientDpi(clientWidth, clientHeight, style, exStyle, dpi);
+    Check(actual.cx == expected.right - expected.left, "window width should use requested DPI for non-client frame");
+    Check(actual.cy == expected.bottom - expected.top, "window height should use requested DPI for non-client frame");
+}
+
 int main() {
     ParsesSinglePackageJson();
     ParsesFirstValidPackageFromArray();
@@ -182,5 +209,6 @@ int main() {
     KnownAgentsIncludeClassicNpmAndVsCodeEntries();
     KnownAgentMergeDeduplicatesAndPreservesCustomExe();
     KnownAgentMergeMigratesOldClaudeMsixEntry();
+    WindowSizeForClientUsesRequestedDpi();
     return 0;
 }

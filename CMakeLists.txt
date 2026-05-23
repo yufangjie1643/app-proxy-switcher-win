@@ -4,7 +4,7 @@ if(POLICY CMP0091)
     cmake_policy(SET CMP0091 NEW)
 endif()
 
-project(CodexProxySwitcher VERSION 2.1.0 LANGUAGES CXX RC)
+project(CodexProxySwitcher VERSION 2.1.1 LANGUAGES CXX RC)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -16,6 +16,7 @@ endif()
 set(SOURCES
     src/main.cpp
     src/utils.cpp
+    src/dpi_utils.cpp
     src/known_agents.cpp
     src/config_store.cpp
     src/app_finder.cpp
@@ -29,6 +30,7 @@ set(SOURCES
 
 set(HEADERS
     src/utils.hpp
+    src/dpi_utils.hpp
     src/known_agents.hpp
     src/app_config.hpp
     src/proxy_mode.hpp
@@ -86,6 +88,7 @@ include(CTest)
 if(BUILD_TESTING)
     add_executable(app_finder_tests
         tests/app_finder_tests.cpp
+        src/dpi_utils.cpp
         src/known_agents.cpp
         src/app_finder.cpp
         src/utils.cpp
@@ -102,6 +105,6 @@ if(BUILD_TESTING)
         target_compile_options(app_finder_tests PRIVATE /utf-8)
     endif()
 
-    target_link_libraries(app_finder_tests PRIVATE shell32 ole32)
+    target_link_libraries(app_finder_tests PRIVATE shell32 ole32 user32)
     add_test(NAME app_finder_tests COMMAND app_finder_tests)
 endif()
