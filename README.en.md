@@ -26,10 +26,10 @@ If unsure, choose the WebView2 build. Most Windows 10/11 systems already include
 
 Prebuilt executables are not committed to the repository. Download the static x64 build from GitHub Releases:
 
-- [AppProxySwitcher-WebView2-x64.zip](https://github.com/yufangjie1643/app-proxy-switcher-win/releases/download/v2.3.0/AppProxySwitcher-WebView2-x64.zip)
-- [AppProxySwitcher-Win32-x64.zip](https://github.com/yufangjie1643/app-proxy-switcher-win/releases/download/v2.3.0/AppProxySwitcher-Win32-x64.zip)
-- [CodexProxySwitcher-webview2-x64.exe](https://github.com/yufangjie1643/app-proxy-switcher-win/releases/download/v2.3.0/CodexProxySwitcher-webview2-x64.exe)
-- [CodexProxySwitcher-win32-x64.exe](https://github.com/yufangjie1643/app-proxy-switcher-win/releases/download/v2.3.0/CodexProxySwitcher-win32-x64.exe)
+- [AppProxySwitcher-WebView2-x64.zip](https://github.com/yufangjie1643/app-proxy-switcher-win/releases/download/v2.3.1/AppProxySwitcher-WebView2-x64.zip)
+- [AppProxySwitcher-Win32-x64.zip](https://github.com/yufangjie1643/app-proxy-switcher-win/releases/download/v2.3.1/AppProxySwitcher-Win32-x64.zip)
+- [CodexProxySwitcher-webview2-x64.exe](https://github.com/yufangjie1643/app-proxy-switcher-win/releases/download/v2.3.1/CodexProxySwitcher-webview2-x64.exe)
+- [CodexProxySwitcher-win32-x64.exe](https://github.com/yufangjie1643/app-proxy-switcher-win/releases/download/v2.3.1/CodexProxySwitcher-win32-x64.exe)
 
 Unzip the package and run `CodexProxySwitcherWebView2.exe` or `CodexProxySwitcher.exe`. On first launch, the app reads or creates its config and shows the detected target program path.
 

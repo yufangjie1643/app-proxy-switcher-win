@@ -26,10 +26,10 @@
 
 仓库不提交编译好的 exe，请到 GitHub Release 下载静态 x64 版本：
 
-- [AppProxySwitcher-WebView2-x64.zip](https://github.com/yufangjie1643/app-proxy-switcher-win/releases/download/v2.3.0/AppProxySwitcher-WebView2-x64.zip)
-- [AppProxySwitcher-Win32-x64.zip](https://github.com/yufangjie1643/app-proxy-switcher-win/releases/download/v2.3.0/AppProxySwitcher-Win32-x64.zip)
-- [CodexProxySwitcher-webview2-x64.exe](https://github.com/yufangjie1643/app-proxy-switcher-win/releases/download/v2.3.0/CodexProxySwitcher-webview2-x64.exe)
-- [CodexProxySwitcher-win32-x64.exe](https://github.com/yufangjie1643/app-proxy-switcher-win/releases/download/v2.3.0/CodexProxySwitcher-win32-x64.exe)
+- [AppProxySwitcher-WebView2-x64.zip](https://github.com/yufangjie1643/app-proxy-switcher-win/releases/download/v2.3.1/AppProxySwitcher-WebView2-x64.zip)
+- [AppProxySwitcher-Win32-x64.zip](https://github.com/yufangjie1643/app-proxy-switcher-win/releases/download/v2.3.1/AppProxySwitcher-Win32-x64.zip)
+- [CodexProxySwitcher-webview2-x64.exe](https://github.com/yufangjie1643/app-proxy-switcher-win/releases/download/v2.3.1/CodexProxySwitcher-webview2-x64.exe)
+- [CodexProxySwitcher-win32-x64.exe](https://github.com/yufangjie1643/app-proxy-switcher-win/releases/download/v2.3.1/CodexProxySwitcher-win32-x64.exe)
 
 下载后解压，双击运行 `CodexProxySwitcherWebView2.exe` 或 `CodexProxySwitcher.exe`。首次启动会读取或创建配置，并显示识别到的目标程序路径。
 
