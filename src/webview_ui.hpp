@@ -12,23 +12,25 @@ inline std::wstring BuildWebViewHtml() {
   <style>
     :root {
       color-scheme: light;
-      --bg: #edf2f7;
-      --surface: #ffffff;
-      --surface-soft: #f8fafc;
-      --surface-tint: #f2f6fb;
-      --text: #152033;
-      --muted: #637089;
-      --faint: #8a96aa;
-      --line: #d6deea;
-      --line-strong: #c3cfdd;
-      --primary: #1668dc;
-      --primary-strong: #0f4fb2;
-      --ok: #12845a;
-      --warn: #b76a00;
+      --bg: #eef3f6;
+      --paper: #fbf6ee;
+      --paper-deep: #f2eadf;
+      --surface: #fffdf8;
+      --surface-soft: #f7f1e8;
+      --surface-cool: #f2f7f8;
+      --text: #171717;
+      --muted: #6a6259;
+      --faint: #8f867b;
+      --line: rgba(39, 31, 22, 0.18);
+      --line-strong: rgba(39, 31, 22, 0.32);
+      --primary: #315f8d;
+      --primary-strong: #24496f;
+      --ok: #2e7d67;
+      --warn: #d86135;
       --danger: #a33b34;
-      --amber-bg: #fff7e8;
-      --shadow: 0 18px 40px rgba(22, 36, 60, 0.13);
-      --shadow-soft: 0 8px 20px rgba(22, 36, 60, 0.08);
+      --amber-bg: #fff0df;
+      --shadow: 0 18px 42px rgba(22, 22, 22, 0.14);
+      --shadow-soft: 0 8px 20px rgba(22, 22, 22, 0.08);
       font-family: "Segoe UI Variable", "Segoe UI", "Microsoft YaHei UI", sans-serif;
     }
 
@@ -39,7 +41,7 @@ inline std::wstring BuildWebViewHtml() {
       min-height: 100vh;
       color: var(--text);
       background:
-        linear-gradient(180deg, #f9fbfe 0, var(--bg) 100%);
+        linear-gradient(180deg, #f9fbfc 0, var(--bg) 100%);
     }
 
     .app {
@@ -56,6 +58,7 @@ inline std::wstring BuildWebViewHtml() {
       justify-content: space-between;
       gap: 18px;
       min-width: 0;
+      padding: 2px 4px 6px;
     }
 
     .title {
@@ -68,22 +71,33 @@ inline std::wstring BuildWebViewHtml() {
     .mark {
       width: 44px;
       height: 44px;
-      border-radius: 10px;
+      border-radius: 0;
       display: grid;
       place-items: center;
-      background: #1668dc;
+      background: var(--text);
       color: #fff;
       font-weight: 800;
       letter-spacing: 0;
-      box-shadow: 0 12px 26px rgba(22, 104, 220, 0.22);
+      box-shadow: 8px 8px 0 rgba(49, 95, 141, 0.18);
       flex: 0 0 auto;
+      position: relative;
+    }
+
+    .mark:after {
+      content: "";
+      position: absolute;
+      left: 8px;
+      right: 8px;
+      bottom: 8px;
+      height: 2px;
+      background: #d86135;
     }
 
     h1 {
       margin: 0;
-      font-size: 24px;
+      font-size: 25px;
       line-height: 1.16;
-      font-weight: 720;
+      font-weight: 760;
       letter-spacing: 0;
     }
 
@@ -110,8 +124,8 @@ inline std::wstring BuildWebViewHtml() {
       min-height: 34px;
       padding: 7px 12px;
       border: 1px solid var(--line);
-      border-radius: 999px;
-      background: rgba(255, 255, 255, 0.9);
+      border-radius: 0;
+      background: var(--surface);
       color: var(--muted);
       font-size: 13px;
       white-space: nowrap;
@@ -120,8 +134,8 @@ inline std::wstring BuildWebViewHtml() {
 
     .version-badge {
       color: #2f5f88;
-      background: #eef6ff;
-      border-color: #cfe0f5;
+      background: #edf4f6;
+      border-color: rgba(49, 95, 141, 0.28);
     }
 
     .dot {
@@ -129,7 +143,7 @@ inline std::wstring BuildWebViewHtml() {
       height: 8px;
       border-radius: 50%;
       background: var(--ok);
-      box-shadow: 0 0 0 4px rgba(18, 132, 90, 0.12);
+      box-shadow: 0 0 0 4px rgba(46, 125, 103, 0.13);
     }
 
     body[data-found="false"] .dot {
@@ -141,7 +155,7 @@ inline std::wstring BuildWebViewHtml() {
       display: none;
       padding: 12px 14px;
       border: 1px solid #ebc27c;
-      border-radius: 8px;
+      border-radius: 0;
       background: var(--amber-bg);
       color: #744700;
       font-size: 13px;
@@ -155,8 +169,8 @@ inline std::wstring BuildWebViewHtml() {
 
     main {
       display: grid;
-      grid-template-columns: minmax(0, 1fr) 260px;
-      gap: 14px;
+      grid-template-columns: minmax(0, 1fr) 270px;
+      gap: 16px;
       align-items: start;
       min-width: 0;
     }
@@ -164,23 +178,34 @@ inline std::wstring BuildWebViewHtml() {
     .panel {
       background: var(--surface);
       border: 1px solid var(--line);
-      border-radius: 10px;
+      border-radius: 0;
       box-shadow: var(--shadow);
       overflow: hidden;
       min-width: 0;
+      position: relative;
+    }
+
+    .panel:before {
+      content: "";
+      position: absolute;
+      inset: 14px;
+      border: 1px solid rgba(39, 31, 22, 0.10);
+      pointer-events: none;
     }
 
     .status {
       padding: 18px;
       display: grid;
       gap: 14px;
+      position: relative;
     }
 
     .guide {
       padding: 14px;
-      border: 1px solid #cfe0f5;
-      border-radius: 9px;
-      background: #f3f8ff;
+      border: 1px solid rgba(49, 95, 141, 0.25);
+      border-left: 4px solid var(--primary);
+      border-radius: 0;
+      background: var(--surface-cool);
       display: grid;
       gap: 12px;
     }
@@ -202,9 +227,9 @@ inline std::wstring BuildWebViewHtml() {
       font-size: 12px;
       font-weight: 650;
       padding: 4px 8px;
-      border-radius: 999px;
+      border-radius: 0;
       background: #ffffff;
-      border: 1px solid #d8e7f8;
+      border: 1px solid rgba(49, 95, 141, 0.24);
       white-space: nowrap;
     }
 
@@ -217,9 +242,9 @@ inline std::wstring BuildWebViewHtml() {
     .step {
       padding: 11px;
       min-height: 72px;
-      border-radius: 8px;
+      border-radius: 0;
       background: #fff;
-      border: 1px solid #d8e6f8;
+      border: 1px solid rgba(49, 95, 141, 0.20);
       display: grid;
       grid-template-columns: 26px minmax(0, 1fr);
       gap: 9px;
@@ -231,8 +256,8 @@ inline std::wstring BuildWebViewHtml() {
       height: 26px;
       display: grid;
       place-items: center;
-      border-radius: 7px;
-      background: #1668dc;
+      border-radius: 0;
+      background: var(--primary);
       color: #fff;
       font-size: 13px;
       font-weight: 760;
@@ -255,7 +280,7 @@ inline std::wstring BuildWebViewHtml() {
       gap: 6px;
       padding: 12px;
       border: 1px solid var(--line);
-      border-radius: 8px;
+      border-radius: 0;
       background: var(--surface-soft);
       min-width: 0;
     }
@@ -269,6 +294,7 @@ inline std::wstring BuildWebViewHtml() {
       font-size: 12px;
       font-weight: 680;
       letter-spacing: 0;
+      color: var(--primary);
     }
 
     .value {
@@ -285,7 +311,7 @@ inline std::wstring BuildWebViewHtml() {
 
     .path {
       padding: 13px 14px;
-      border-radius: 8px;
+      border-radius: 0;
       background: #ffffff;
       border: 1px solid var(--line-strong);
       font-family: "Cascadia Mono", Consolas, monospace;
@@ -304,6 +330,8 @@ inline std::wstring BuildWebViewHtml() {
       align-content: start;
       position: sticky;
       top: 24px;
+      background:
+        linear-gradient(180deg, #fffdf8 0, #f8f1e8 100%);
     }
 
     .actions-title {
@@ -326,7 +354,7 @@ inline std::wstring BuildWebViewHtml() {
     button {
       width: 100%;
       border: 1px solid var(--line);
-      border-radius: 8px;
+      border-radius: 0;
       padding: 10px 12px;
       min-height: 46px;
       background: #fff;
@@ -342,13 +370,13 @@ inline std::wstring BuildWebViewHtml() {
     }
 
     button:hover {
-      transform: translateY(-1px);
-      border-color: rgba(22, 104, 220, 0.42);
-      box-shadow: 0 10px 22px rgba(22, 36, 60, 0.10);
+      transform: translate(-1px, -1px);
+      border-color: rgba(49, 95, 141, 0.45);
+      box-shadow: 4px 4px 0 rgba(49, 95, 141, 0.13);
     }
 
     button:focus-visible {
-      outline: 3px solid rgba(22, 104, 220, 0.22);
+      outline: 3px solid rgba(216, 97, 53, 0.20);
       outline-offset: 2px;
     }
 
@@ -359,13 +387,14 @@ inline std::wstring BuildWebViewHtml() {
     .btn-icon {
       width: 28px;
       height: 28px;
-      border-radius: 7px;
+      border-radius: 0;
       display: grid;
       place-items: center;
-      background: #eef4fb;
-      color: #31506f;
+      background: var(--paper-deep);
+      color: var(--primary);
       font-size: 13px;
       font-weight: 780;
+      border: 1px solid rgba(39, 31, 22, 0.08);
     }
 
     .btn-text {
@@ -388,9 +417,9 @@ inline std::wstring BuildWebViewHtml() {
 
     .primary {
       border-color: transparent;
-      background: #1668dc;
+      background: var(--text);
       color: #fff;
-      box-shadow: 0 14px 26px rgba(22, 104, 220, 0.22);
+      box-shadow: 6px 6px 0 rgba(216, 97, 53, 0.24);
     }
 
     .primary .btn-icon {
@@ -403,18 +432,18 @@ inline std::wstring BuildWebViewHtml() {
     }
 
     .secondary {
-      background: #f8fafc;
+      background: #fbfcfc;
     }
 
     .quiet {
       min-height: 42px;
-      background: #fff;
+      background: var(--surface);
     }
 
     .danger {
       color: var(--danger);
-      background: #fff8f7;
-      border-color: #efc8c4;
+      background: #fff3ef;
+      border-color: #e9b9ad;
     }
 
     .danger .btn-icon {
@@ -428,9 +457,9 @@ inline std::wstring BuildWebViewHtml() {
       right: 28px;
       bottom: 22px;
       padding: 12px 14px;
-      border-radius: 8px;
+      border-radius: 0;
       color: #fff;
-      background: rgba(20, 30, 47, 0.94);
+      background: rgba(22, 21, 20, 0.95);
       box-shadow: 0 18px 40px rgba(0, 0, 0, 0.20);
       opacity: 0;
       transform: translateY(8px);
