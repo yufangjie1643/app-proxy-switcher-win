@@ -4,6 +4,7 @@
 #include "app_finder.hpp"
 #include "app_select_dialog.hpp"
 #include "launcher.hpp"
+#include "proxy_detector.hpp"
 #include "proxy_dialog.hpp"
 #include "utils.hpp"
 #include <windows.h>
@@ -22,6 +23,7 @@
 #define IDC_BTN_DISABLE_SYS 303
 #define IDC_BTN_PROXY_ADDR  304
 #define IDC_BTN_CONFIG_DIR  305
+#define IDC_BTN_CHECK_PROXY 306
 
 namespace {
 
@@ -30,7 +32,7 @@ namespace {
 #endif
 
 constexpr int kBaseClientWidth = 560;
-constexpr int kBaseClientHeight = 340;
+constexpr int kBaseClientHeight = 390;
 
 }
 
@@ -119,8 +121,8 @@ void AppWindow::OnCreate() {
         WS_CHILD | WS_VISIBLE | SS_LEFT,
         0, 0, 0, 0, hwnd_, nullptr, hInst_, nullptr);
 
-    hwndLblPath_ = CreateWindowExW(0, L"STATIC", L"路径: 未检测到",
-        WS_CHILD | WS_VISIBLE | SS_LEFT | SS_NOPREFIX,
+    hwndLblPath_ = CreateWindowExW(WS_EX_CLIENTEDGE, L"EDIT", L"路径:\r\n未检测到",
+        WS_CHILD | WS_VISIBLE | ES_LEFT | ES_MULTILINE | ES_READONLY,
         0, 0, 0, 0, hwnd_, nullptr, hInst_, nullptr);
 
     hwndBtnNative_ = CreateWindowExW(0, L"BUTTON", L"原生启动",
@@ -151,6 +153,10 @@ void AppWindow::OnCreate() {
         WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON | WS_TABSTOP,
         0, 0, 0, 0, hwnd_, (HMENU)IDC_BTN_CONFIG_DIR, hInst_, nullptr);
 
+    hwndBtnCheckProxy_ = CreateWindowExW(0, L"BUTTON", L"检测代理",
+        WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON | WS_TABSTOP,
+        0, 0, 0, 0, hwnd_, (HMENU)IDC_BTN_CHECK_PROXY, hInst_, nullptr);
+
     ApplyControlFont(hwndLblApp_);
     ApplyControlFont(hwndLblProxy_);
     ApplyControlFont(hwndLblMode_);
@@ -161,6 +167,7 @@ void AppWindow::OnCreate() {
     ApplyControlFont(hwndBtnMode_);
     ApplyControlFont(hwndBtnDisableSys_);
     ApplyControlFont(hwndBtnProxyAddr_);
+    ApplyControlFont(hwndBtnCheckProxy_);
     ApplyControlFont(hwndBtnConfigDir_);
 
     LayoutControls();
@@ -200,6 +207,7 @@ void AppWindow::UpdateDpi(unsigned int dpi) {
     ApplyControlFont(hwndBtnMode_);
     ApplyControlFont(hwndBtnDisableSys_);
     ApplyControlFont(hwndBtnProxyAddr_);
+    ApplyControlFont(hwndBtnCheckProxy_);
     ApplyControlFont(hwndBtnConfigDir_);
 }
 
@@ -214,7 +222,7 @@ void AppWindow::LayoutControls() {
     int margin = Scale(16);
     int gap = Scale(12);
     int labelH = Scale(22);
-    int pathMinH = labelH + Scale(4);
+    int pathMinH = Scale(72);
     int bigButtonH = Scale(48);
     int smallButtonH = Scale(32);
     int contentW = std::max(Scale(1), clientW - margin * 2);
@@ -241,12 +249,12 @@ void AppWindow::LayoutControls() {
                     : nullptr;
                 RECT calc = { 0, 0, contentW, 0 };
                 DrawTextW(hdc, text.c_str(), -1, &calc,
-                    DT_CALCRECT | DT_WORDBREAK | DT_NOPREFIX);
+                    DT_CALCRECT | DT_WORDBREAK | DT_NOPREFIX | DT_EDITCONTROL);
                 if (oldFont) {
                     SelectObject(hdc, oldFont);
                 }
                 ReleaseDC(hwnd_, hdc);
-                pathH = std::max(pathMinH, static_cast<int>(calc.bottom - calc.top) + Scale(6));
+                pathH = std::max(pathMinH, static_cast<int>(calc.bottom - calc.top) + Scale(12));
             }
         }
     }
@@ -264,7 +272,10 @@ void AppWindow::LayoutControls() {
 
     y += smallButtonH + Scale(12);
     MoveWindow(hwndBtnProxyAddr_, margin, y, smallW, smallButtonH, TRUE);
-    MoveWindow(hwndBtnConfigDir_, margin + smallW + gap, y, contentW - smallW - gap, smallButtonH, TRUE);
+    MoveWindow(hwndBtnCheckProxy_, margin + smallW + gap, y, contentW - smallW - gap, smallButtonH, TRUE);
+
+    y += smallButtonH + Scale(12);
+    MoveWindow(hwndBtnConfigDir_, margin, y, contentW, smallButtonH, TRUE);
 
     y += smallButtonH + Scale(12);
     if (hwndBtnDisableSys_) {
@@ -386,6 +397,9 @@ void AppWindow::OnCommand(int id) {
         case IDC_BTN_CONFIG_DIR:
             OpenConfigDir();
             break;
+        case IDC_BTN_CHECK_PROXY:
+            CheckProxyAvailabilityAndSuggest();
+            break;
     }
 }
 
@@ -415,16 +429,16 @@ void AppWindow::RefreshStatus() {
     if (hwndLblMode_) {
         std::wstring text = L"模式: ";
         if (configStore_->GetProxyMode() == ProxyMode::EnvVar) {
-            text += L"环境变量";
+            text += L"环境变量 (仅影响启动的程序)";
         } else {
             bool enabled = launcher_->GetSystemProxyManager() && launcher_->GetSystemProxyManager()->IsEnabled();
-            text += enabled ? L"系统代理 (已激活)" : L"系统代理";
+            text += enabled ? L"系统代理 (已全局影响，建议用完关闭)" : L"系统代理 (会影响全局网络)";
         }
         SetWindowTextW(hwndLblMode_, text.c_str());
     }
 
     if (hwndLblPath_) {
-        std::wstring text = L"路径: ";
+        std::wstring text = L"路径:\r\n";
         if (currentAppInfo_.IsFound()) {
             text += currentAppInfo_.exePath;
         } else {
@@ -438,7 +452,12 @@ void AppWindow::RefreshStatus() {
 
 void AppWindow::LaunchNative() {
     if (!currentAppInfo_.IsFound()) {
-        MessageBoxW(hwnd_, L"未找到目标应用程序。\n\n请使用\"切换应用\"选择一个有效的应用。",
+        MessageBoxW(hwnd_,
+            L"未找到目标应用程序。\n\n"
+            L"可尝试：\n"
+            L"1. 点击“切换应用”重新扫描或手动选择 exe\n"
+            L"2. 点击“配置目录”查看当前配置\n"
+            L"3. 确认目标软件已经安装",
             L"错误", MB_OK | MB_ICONWARNING);
         return;
     }
@@ -446,6 +465,12 @@ void AppWindow::LaunchNative() {
     auto result = launcher_->Launch(configStore_->GetSettings(), ProxyMode::EnvVar, currentAppInfo_);
     if (!result.success) {
         MessageBoxW(hwnd_, result.errorMessage.c_str(), L"启动失败", MB_OK | MB_ICONERROR);
+    } else {
+        std::wstring message =
+            L"已原生启动：" + currentAppInfo_.displayName + L"\n\n"
+            L"模式：不注入代理环境变量\n"
+            L"路径：" + currentAppInfo_.exePath;
+        MessageBoxW(hwnd_, message.c_str(), L"启动成功", MB_OK | MB_ICONINFORMATION);
     }
 }
 
@@ -459,7 +484,12 @@ void AppWindow::LaunchWithProxy() {
     }
 
     if (!currentAppInfo_.IsFound()) {
-        MessageBoxW(hwnd_, L"未找到目标应用程序。\n\n请使用\"切换应用\"选择一个有效的应用。",
+        MessageBoxW(hwnd_,
+            L"未找到目标应用程序。\n\n"
+            L"可尝试：\n"
+            L"1. 点击“切换应用”重新扫描或手动选择 exe\n"
+            L"2. 点击“配置目录”查看当前配置\n"
+            L"3. 确认目标软件已经安装",
             L"错误", MB_OK | MB_ICONWARNING);
         return;
     }
@@ -471,6 +501,23 @@ void AppWindow::LaunchWithProxy() {
     } else if (mode == ProxyMode::SystemProxy) {
         UpdateProxyButtonLabel();
         RefreshStatus();
+        std::wstring message =
+            L"已使用系统代理启动：" + currentAppInfo_.displayName + L"\n\n"
+            L"模式：系统代理，会影响全局网络\n"
+            L"代理：" + FormatProxyUrl(configStore_->GetSettings().scheme, configStore_->GetSettings().host, configStore_->GetSettings().port) + L"\n"
+            L"用完可点击“关闭系统代理”。";
+        MessageBoxW(hwnd_, message.c_str(), L"启动成功", MB_OK | MB_ICONINFORMATION);
+    } else {
+        std::wstring proxyUrl = FormatProxyUrl(
+            configStore_->GetSettings().scheme,
+            configStore_->GetSettings().host,
+            configStore_->GetSettings().port);
+        std::wstring message =
+            L"已使用环境变量代理启动：" + currentAppInfo_.displayName + L"\n\n"
+            L"模式：安全，仅影响本次启动的程序\n"
+            L"HTTP_PROXY / HTTPS_PROXY / ALL_PROXY = " + proxyUrl + L"\n"
+            L"NO_PROXY = localhost,127.0.0.1,::1";
+        MessageBoxW(hwnd_, message.c_str(), L"启动成功", MB_OK | MB_ICONINFORMATION);
     }
 }
 
@@ -484,7 +531,10 @@ void AppWindow::ToggleProxyMode() {
         MessageBoxW(hwnd_, L"已切换到环境变量模式。\n\n仅对当前启动的程序注入代理环境变量。",
             L"模式切换", MB_OK | MB_ICONINFORMATION);
     } else {
-        MessageBoxW(hwnd_, L"已切换到系统代理模式。\n\n将修改 Windows Internet Options 系统代理设置，全局生效（绕过局域网）。",
+        MessageBoxW(hwnd_,
+            L"已切换到系统代理模式。\n\n"
+            L"注意：该模式会修改 Windows Internet Options，影响浏览器和其他程序的全局网络。\n"
+            L"用完请点击“关闭系统代理”。",
             L"模式切换", MB_OK | MB_ICONINFORMATION);
     }
 
@@ -498,6 +548,31 @@ void AppWindow::DisableSystemProxy() {
         UpdateProxyButtonLabel();
         RefreshStatus();
         MessageBoxW(hwnd_, L"系统代理已关闭", L"提示", MB_OK | MB_ICONINFORMATION);
+    }
+}
+
+void AppWindow::CheckProxyAvailabilityAndSuggest() {
+    auto& settings = configStore_->GetSettings();
+    auto result = CheckProxyAvailability(settings);
+    std::wstring description = DescribeProxyScanResult(settings, result);
+
+    if (result.currentOpen || result.openPorts.empty()) {
+        MessageBoxW(hwnd_, description.c_str(), L"代理检测", MB_OK | (result.currentOpen ? MB_ICONINFORMATION : MB_ICONWARNING));
+        return;
+    }
+
+    int suggestedPort = result.openPorts.front();
+    std::wstring suggestedUrl = L"http://127.0.0.1:" + std::to_wstring(suggestedPort);
+    std::wstring message =
+        description + L"\n\n"
+        L"是否切换到推荐地址：\n" + suggestedUrl + L" ?";
+    if (MessageBoxW(hwnd_, message.c_str(), L"发现可用代理端口", MB_YESNO | MB_ICONQUESTION) == IDYES) {
+        settings.scheme = L"http";
+        settings.host = L"127.0.0.1";
+        settings.port = suggestedPort;
+        configStore_->Save();
+        RefreshStatus();
+        MessageBoxW(hwnd_, L"代理地址已更新。", L"代理检测", MB_OK | MB_ICONINFORMATION);
     }
 }
 

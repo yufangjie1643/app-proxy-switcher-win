@@ -38,6 +38,7 @@ private:
     void OpenConfigDir();
     void ToggleProxyMode();
     void DisableSystemProxy();
+    void CheckProxyAvailabilityAndSuggest();
     void UpdateProxyButtonLabel();
 
     HWND hwnd_ = nullptr;
@@ -62,5 +63,6 @@ private:
     HWND hwndBtnMode_ = nullptr;
     HWND hwndBtnDisableSys_ = nullptr;
     HWND hwndBtnProxyAddr_ = nullptr;
+    HWND hwndBtnCheckProxy_ = nullptr;
     HWND hwndBtnConfigDir_ = nullptr;
 };

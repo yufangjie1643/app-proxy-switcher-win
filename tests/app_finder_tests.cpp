@@ -1,7 +1,11 @@
+#include <winsock2.h>
+#include <ws2tcpip.h>
 #include "../src/app_finder.hpp"
 #include "../src/dpi_utils.hpp"
 #include "../src/known_agents.hpp"
+#include "../src/proxy_detector.hpp"
 #include <windows.h>
+#include <algorithm>
 #include <cstdlib>
 #include <iostream>
 #include <string>
@@ -200,6 +204,99 @@ static void WindowSizeForClientUsesRequestedDpi() {
     Check(actual.cy == expected.bottom - expected.top, "window height should use requested DPI for non-client frame");
 }
 
+static bool HasInt(const std::vector<int>& values, int expected) {
+    return std::find(values.begin(), values.end(), expected) != values.end();
+}
+
+struct WinsockForTest {
+    WinsockForTest() {
+        WSADATA data = {};
+        ok = WSAStartup(MAKEWORD(2, 2), &data) == 0;
+    }
+
+    ~WinsockForTest() {
+        if (ok) {
+            WSACleanup();
+        }
+    }
+
+    bool ok = false;
+};
+
+struct LoopbackListener {
+    explicit LoopbackListener(WinsockForTest& winsock) {
+        if (!winsock.ok) return;
+
+        socket = ::socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+        if (socket == INVALID_SOCKET) return;
+
+        sockaddr_in addr = {};
+        addr.sin_family = AF_INET;
+        addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+        addr.sin_port = 0;
+
+        if (bind(socket, reinterpret_cast<sockaddr*>(&addr), sizeof(addr)) != 0) {
+            closesocket(socket);
+            socket = INVALID_SOCKET;
+            return;
+        }
+
+        if (listen(socket, 1) != 0) {
+            closesocket(socket);
+            socket = INVALID_SOCKET;
+            return;
+        }
+
+        int len = sizeof(addr);
+        if (getsockname(socket, reinterpret_cast<sockaddr*>(&addr), &len) != 0) {
+            closesocket(socket);
+            socket = INVALID_SOCKET;
+            return;
+        }
+
+        port = ntohs(addr.sin_port);
+    }
+
+    ~LoopbackListener() {
+        if (socket != INVALID_SOCKET) {
+            closesocket(socket);
+        }
+    }
+
+    SOCKET socket = INVALID_SOCKET;
+    int port = 0;
+};
+
+static void CommonProxyPortsIncludeClassicPorts() {
+    const auto& ports = GetCommonProxyPorts();
+
+    Check(HasInt(ports, 7890), "common proxy ports should include Clash default 7890");
+    Check(HasInt(ports, 7897), "common proxy ports should include current default 7897");
+    Check(HasInt(ports, 1080), "common proxy ports should include SOCKS default 1080");
+    Check(HasInt(ports, 10808), "common proxy ports should include 10808");
+    Check(HasInt(ports, 10809), "common proxy ports should include 10809");
+    Check(HasInt(ports, 8080), "common proxy ports should include 8080");
+    Check(HasInt(ports, 8118), "common proxy ports should include 8118");
+    Check(HasInt(ports, 8888), "common proxy ports should include 8888");
+}
+
+static void TcpPortProbeDetectsOpenLoopbackListener() {
+    WinsockForTest winsock;
+    LoopbackListener listener(winsock);
+    Check(listener.port > 0, "test listener should bind an ephemeral loopback port");
+
+    Check(IsTcpPortOpen(L"127.0.0.1", listener.port, 300), "TCP probe should detect open loopback listener");
+}
+
+static void ScanProxyPortsFindsInjectedOpenPort() {
+    WinsockForTest winsock;
+    LoopbackListener listener(winsock);
+    Check(listener.port > 0, "test listener should bind an ephemeral loopback port");
+
+    auto openPorts = ScanOpenProxyPorts(L"127.0.0.1", { listener.port, 1 }, 300);
+    Check(HasInt(openPorts, listener.port), "proxy scan should return open injected port");
+}
+
 int main() {
     ParsesSinglePackageJson();
     ParsesFirstValidPackageFromArray();
@@ -210,5 +307,8 @@ int main() {
     KnownAgentMergeDeduplicatesAndPreservesCustomExe();
     KnownAgentMergeMigratesOldClaudeMsixEntry();
     WindowSizeForClientUsesRequestedDpi();
+    CommonProxyPortsIncludeClassicPorts();
+    TcpPortProbeDetectsOpenLoopbackListener();
+    ScanProxyPortsFindsInjectedOpenPort();
     return 0;
 }

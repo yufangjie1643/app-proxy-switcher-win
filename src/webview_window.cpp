@@ -4,6 +4,7 @@
 #include "dpi_utils.hpp"
 #include "app_finder.hpp"
 #include "launcher.hpp"
+#include "proxy_detector.hpp"
 #include "proxy_dialog.hpp"
 #include "utils.hpp"
 #include "webview_ui.hpp"
@@ -209,11 +210,21 @@ void WebViewWindow::ResizeWebView() {
 void WebViewWindow::HandleWebMessage(const std::wstring& json) {
     std::wstring command = JsonStringField(json, L"command");
     if (command == L"ready" || command == L"refresh") {
+        UpdateAppDisplay();
+        PostStatus();
+    } else if (command == L"rescan") {
+        UpdateAppDisplay();
+        lastActionText_ = currentAppInfo_.IsFound()
+            ? L"重新扫描完成：已找到目标程序。"
+            : L"重新扫描完成：仍未找到。请点击“切换应用”手动选择 exe。";
+        PostToast(lastActionText_);
         PostStatus();
     } else if (command == L"launchNative") {
         LaunchNative();
     } else if (command == L"launchProxy") {
         LaunchWithProxy();
+    } else if (command == L"checkProxy") {
+        CheckProxyAvailabilityAndSuggest();
     } else if (command == L"switchMode") {
         ToggleProxyMode();
     } else if (command == L"disableSystemProxy") {
@@ -250,8 +261,12 @@ void WebViewWindow::PostStatus() {
         L"\"proxyUrl\":\"" + JsonEscape(proxyUrl) + L"\","
         L"\"modeText\":\"" + JsonEscape(modeText) + L"\","
         L"\"pathText\":\"" + JsonEscape(pathText) + L"\","
+        L"\"proxyCheckText\":\"" + JsonEscape(proxyCheckText_) + L"\","
+        L"\"lastActionText\":\"" + JsonEscape(lastActionText_) + L"\","
         L"\"proxyButtonText\":\"" + JsonEscape(proxyButtonText) + L"\","
         L"\"found\":" + BoolJson(currentAppInfo_.IsFound()) + L","
+        L"\"envMode\":" + BoolJson(envMode) + L","
+        L"\"systemProxyActive\":" + BoolJson(systemProxyEnabled) + L","
         L"\"canDisableSystemProxy\":" + BoolJson(systemProxyEnabled) +
         L"}";
     webview_->PostWebMessageAsJson(json.c_str());
@@ -270,13 +285,19 @@ void WebViewWindow::UpdateAppDisplay() {
 
 void WebViewWindow::LaunchNative() {
     if (!currentAppInfo_.IsFound()) {
-        PostToast(L"未找到目标应用程序，请先切换应用。");
+        lastActionText_ = L"启动失败：未找到目标程序。请重新扫描、切换应用或手动选择 exe。";
+        PostToast(lastActionText_);
+        PostStatus();
         return;
     }
     auto result = launcher_->Launch(configStore_->GetSettings(), ProxyMode::EnvVar, currentAppInfo_);
     if (!result.success) {
-        PostToast(result.errorMessage);
+        lastActionText_ = L"启动失败：" + result.errorMessage;
+        PostToast(lastActionText_);
     } else {
+        lastActionText_ =
+            L"已原生启动：" + currentAppInfo_.displayName +
+            L"。未注入代理环境变量。";
         PostToast(L"已原生启动");
     }
     PostStatus();
@@ -284,18 +305,36 @@ void WebViewWindow::LaunchNative() {
 
 void WebViewWindow::LaunchWithProxy() {
     if (configStore_->GetSettings().port <= 0) {
+        lastActionText_ = L"代理端口未配置，请先填写代理地址。";
         ShowProxyDialog();
         return;
     }
     if (!currentAppInfo_.IsFound()) {
-        PostToast(L"未找到目标应用程序，请先切换应用。");
+        lastActionText_ = L"启动失败：未找到目标程序。请重新扫描、切换应用或手动选择 exe。";
+        PostToast(lastActionText_);
+        PostStatus();
         return;
     }
     auto mode = configStore_->GetProxyMode();
     auto result = launcher_->Launch(configStore_->GetSettings(), mode, currentAppInfo_);
     if (!result.success) {
-        PostToast(result.errorMessage);
+        lastActionText_ = L"启动失败：" + result.errorMessage;
+        PostToast(lastActionText_);
     } else {
+        std::wstring proxyUrl = FormatProxyUrl(
+            configStore_->GetSettings().scheme,
+            configStore_->GetSettings().host,
+            configStore_->GetSettings().port);
+        if (mode == ProxyMode::EnvVar) {
+            lastActionText_ =
+                L"已使用环境变量代理启动：" + currentAppInfo_.displayName +
+                L"。HTTP_PROXY / HTTPS_PROXY / ALL_PROXY = " + proxyUrl +
+                L"；NO_PROXY = localhost,127.0.0.1,::1。";
+        } else {
+            lastActionText_ =
+                L"已使用系统代理启动：" + currentAppInfo_.displayName +
+                L"。系统代理会影响全局网络，用完请点击“关闭系统代理”。";
+        }
         PostToast(mode == ProxyMode::EnvVar ? L"已使用环境变量代理启动" : L"已使用系统代理启动");
     }
     PostStatus();
@@ -306,16 +345,46 @@ void WebViewWindow::ToggleProxyMode() {
     auto next = (current == ProxyMode::EnvVar) ? ProxyMode::SystemProxy : ProxyMode::EnvVar;
     configStore_->SetProxyMode(next);
     configStore_->Save();
-    PostToast(next == ProxyMode::EnvVar ? L"已切换到环境变量模式" : L"已切换到系统代理模式");
+    lastActionText_ = next == ProxyMode::EnvVar
+        ? L"已切换到环境变量模式：安全，仅影响从本工具启动的程序。"
+        : L"已切换到系统代理模式：会影响全局网络，用完请关闭系统代理。";
+    PostToast(lastActionText_);
     PostStatus();
 }
 
 void WebViewWindow::DisableSystemProxy() {
     if (launcher_->GetSystemProxyManager()) {
         launcher_->GetSystemProxyManager()->Disable();
-        PostToast(L"系统代理已关闭");
+        lastActionText_ = L"系统代理已关闭。";
+        PostToast(lastActionText_);
         PostStatus();
     }
+}
+
+void WebViewWindow::CheckProxyAvailabilityAndSuggest() {
+    auto& settings = configStore_->GetSettings();
+    auto result = CheckProxyAvailability(settings);
+    proxyCheckText_ = DescribeProxyScanResult(settings, result);
+    lastActionText_ = proxyCheckText_;
+
+    if (!result.currentOpen && !result.openPorts.empty()) {
+        int suggestedPort = result.openPorts.front();
+        std::wstring suggestedUrl = L"http://127.0.0.1:" + std::to_wstring(suggestedPort);
+        std::wstring message =
+            proxyCheckText_ + L"\n\n"
+            L"是否切换到推荐地址：\n" + suggestedUrl + L" ?";
+        if (MessageBoxW(hwnd_, message.c_str(), L"发现可用代理端口", MB_YESNO | MB_ICONQUESTION) == IDYES) {
+            settings.scheme = L"http";
+            settings.host = L"127.0.0.1";
+            settings.port = suggestedPort;
+            configStore_->Save();
+            proxyCheckText_ = L"已切换到可用代理：" + suggestedUrl;
+            lastActionText_ = proxyCheckText_;
+        }
+    }
+
+    PostToast(proxyCheckText_);
+    PostStatus();
 }
 
 void WebViewWindow::ShowProxyDialog() {
@@ -339,6 +408,8 @@ void WebViewWindow::ShowProxyDialog() {
             }
         }
         configStore_->Save();
+        proxyCheckText_ = L"代理地址已更新，建议重新点击“检测代理”。";
+        lastActionText_ = L"代理配置已保存。";
         PostToast(L"代理配置已保存");
         PostStatus();
     }
@@ -347,6 +418,9 @@ void WebViewWindow::ShowProxyDialog() {
 void WebViewWindow::ShowAppSelectDialog() {
     AppSelectDialog::Show(hwnd_, *configStore_);
     UpdateAppDisplay();
+    lastActionText_ = currentAppInfo_.IsFound()
+        ? L"已切换应用并找到目标程序。"
+        : L"已切换应用，但当前未找到目标程序。可重新扫描或手动选择 exe。";
     PostStatus();
 }
 

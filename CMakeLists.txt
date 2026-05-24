@@ -4,7 +4,7 @@ if(POLICY CMP0091)
     cmake_policy(SET CMP0091 NEW)
 endif()
 
-project(CodexProxySwitcher VERSION 2.2.0 LANGUAGES CXX RC)
+project(CodexProxySwitcher VERSION 2.3.0 LANGUAGES CXX RC)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -20,6 +20,7 @@ set(SOURCES
     src/known_agents.cpp
     src/config_store.cpp
     src/app_finder.cpp
+    src/proxy_detector.cpp
     src/launcher.cpp
     src/system_proxy.cpp
     src/app_window.cpp
@@ -34,6 +35,7 @@ set(COMMON_SOURCES
     src/known_agents.cpp
     src/config_store.cpp
     src/app_finder.cpp
+    src/proxy_detector.cpp
     src/launcher.cpp
     src/system_proxy.cpp
     src/proxy_dialog.cpp
@@ -49,6 +51,7 @@ set(HEADERS
     src/proxy_mode.hpp
     src/config_store.hpp
     src/app_finder.hpp
+    src/proxy_detector.hpp
     src/launcher.hpp
     src/system_proxy.hpp
     src/app_window.hpp
@@ -89,6 +92,7 @@ target_link_libraries(CodexProxySwitcher PRIVATE
     user32
     gdi32
     advapi32
+    ws2_32
 )
 
 set_target_properties(CodexProxySwitcher PROPERTIES
@@ -167,6 +171,7 @@ if(BUILD_WEBVIEW2)
         user32
         gdi32
         advapi32
+        ws2_32
         version
     )
 
@@ -184,6 +189,7 @@ if(BUILD_TESTING)
         src/dpi_utils.cpp
         src/known_agents.cpp
         src/app_finder.cpp
+        src/proxy_detector.cpp
         src/utils.cpp
     )
 
@@ -198,6 +204,6 @@ if(BUILD_TESTING)
         target_compile_options(app_finder_tests PRIVATE /utf-8)
     endif()
 
-    target_link_libraries(app_finder_tests PRIVATE shell32 ole32 user32)
+    target_link_libraries(app_finder_tests PRIVATE shell32 ole32 user32 ws2_32)
     add_test(NAME app_finder_tests COMMAND app_finder_tests)
 endif()
